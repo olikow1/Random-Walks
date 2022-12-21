@@ -1,0 +1,36 @@
+from pyspark import SparkContext
+from pyspark.sql import SQLContext
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.feature import VectorAssembler
+
+### creating a SparkContext and an SQLContext
+sc = SparkContext('local')
+sql_context = SQLContext(sc)
+
+### reading in the data as a Spark DataFrame
+df = sql_context.read.csv('stock_data.csv', header=True)
+
+### calculating the random walk index for each day
+df = df.withColumn('random_walk_index', abs(df.current_price - df.previous_price) / df.current_price)
+
+### split the data into training and test sets
+training_df, test_df = df.randomSplit([0.7, 0.3])
+
+### create an input feature vector using the random walk index
+vector_assembler = VectorAssembler(inputCols=['random_walk_index'], outputCol='features')
+
+### create a Linear Regression model
+lr = LinearRegression(featuresCol='features', labelCol='current_price')
+
+### training the model on the training data
+model = lr.fit(vector_assembler.transform(training_df))
+
+### make predictions on the test data
+predictions = model.transform(vector_assembler.transform(test_df))
+
+### calculate the mean squared error of the predictions
+mse = predictions.select(mean(col('current_price') - col('prediction')).alias('mse')).collect()[0]['mse']
+print(f'Mean squared error: {mse:.2f}')
+
+### stop the SparkContext
+sc.stop()
