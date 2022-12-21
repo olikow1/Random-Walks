@@ -1,0 +1,42 @@
+import pygame
+import random
+from pygame.locals import *
+
+### starting PyGame library
+pygame.init()
+
+### to create a window for the program
+screen = pygame.display.set_mode((640, 480))
+
+### defining the walker's initial position
+pos = (320, 240)
+
+def simulate_random_walk(pos):
+    """Simulate a single step of a random walk."""
+    x, y = pos
+    ### randoming the direction, choosing it and moving one step in that picked direction
+    if random.random() < 0.5:
+        x += 1
+    else:
+        x -= 1
+    if random.random() < 0.5:
+        y += 1
+    else:
+        y -= 1
+    return (x, y)
+
+while True:
+    ### events
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                ### pause
+                pass
+    ### simulating each step of the random walk
+    pos = simulate_random_walk(pos)
+    ### showing the walker's position on the screen
+    pygame.draw.circle(screen, (0, 0, 0), pos, 5)
+    pygame.display.update()
